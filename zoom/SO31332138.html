@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <style>
+    svg {
+      outline: 1px solid red;
+      margin: 1em;
+
+    }
+
+    svg svg.outline {
+      outline: 1px solid blue;
+      margin: 0;
+    }
+
+    .grid-layer line {
+      fill: none;
+      stroke: #ddd;
+      shape-rendering: crispEdges;
+      vector-effect: non-scaling-stroke;
+    }
+  </style>
+</head>
+<body class="outline">
+<a href="http://stackoverflow.com/questions/31332138/restricting-d3-js-zoom-to-container"></a>
+<script src="d3 CB.js"></script>
+<script>
+  var margin = { top: 40, right: 40, bottom: 40, left: 40 },
+    width = 720,
+    height = 560;
+
+  var innerWidth = width - margin.left - margin.right;
+  var innerHeight = height - margin.top - margin.bottom;
+
+  var zoom = d3.behavior.zoom()
+    .scaleExtent([1, 5])
+    .on("zoom", zoomHandler)
+
+//  svg.call(zoom); // svg captures the mouse events, but container is the element that is scaled according to the zoom level
+
+  var svg = d3.select("body")
+    .append("svg")
+    .classed("svg-frame", true)
+    .attr("width", width)
+    .attr("height", height)
+    .call(zoom);
+
+  var g1 = svg.append("g")
+    .attr("transform", "translate("+ margin.left + "," + margin.top +")")
+    .append("svg")
+    .attr("width", innerWidth)
+    .attr("height", innerHeight)
+    .classed("outline", true)
+
+  var container = g1.append("g")
+    .classed("container", true);
+
+  var grid = container.append("g")
+    .classed("grid-layer", true);
+
+  grid.append("g")
+    .classed("axis-x", true)
+    .selectAll("line")
+    .data(d3.range(0, innerWidth, 20))
+    .enter().append("line")
+    .attr("x1", function(d) { return d; })
+    .attr("y1", 0)
+    .attr("x2", function(d) { return d; })
+    .attr("y2", innerHeight);
+
+  grid.append("g")
+    .classed("axis-y", true)
+    .selectAll("line")
+    .data(d3.range(0, innerHeight, 20))
+    .enter().append("line")
+    .attr("x1", 0)
+    .attr("y1", function(d) { return d; })
+    .attr("x2", innerWidth)
+    .attr("y2", function(d) { return d; });
+
+
+  function zoomHandler() {
+
+    grid
+      .attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+  }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>Voronoi Treemaps</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <style>
+    /*@import url(style.css);*/
+    path {
+      fill: none;
+      stroke: #000;
+      pointer-events: all;
+    }
+    .right {
+      float: right;
+      text-align: right;
+    }
+    #polygon svg {
+      vertical-align: middle;
+    }
+    .stats {
+      font-family: monospace;
+    }
+    #errors text {
+      font: 10px sans-serif;
+    }
+    #errors path, #errors line {
+      stroke: #999;
+      shape-rendering: crispEdges;
+    }
+    #errors rect {
+      fill: #666;
+    }
+    </style>
+
+</head>
+
+<p class="breadcrumbs"><a href="http://www.jasondavies.com">Jason Davies</a>
+<h1>Voronoi Treemaps</h1>
+<div id="chart"></div>
+
+<aside id="errors"></aside>
+
+<div style="margin: 1em 0; font-style: italic; font-size: small">
+  Packages of the <a href="http://flare.prefuse.org/">Flare visualization toolkit</a> by
+  <label for="size"><input id="size" type="radio" name="treemap-value" checked> size</label> or
+  <label for="count"><input id="count" type="radio" name="treemap-value"> count</label>, by subdividing a polygon
+  <span id="polygon"></span>
+  <input id="sides" type="range" min="4" max="13" value="13">.
+</div>
+
+<p>Voronoi treemaps visualise hierarchical data by recursively partitioning convex polygons using weighted centroidal Voronoi diagrams.
+The polygon areas are proportional to the relative weights of their corresponding nodes.
+
+<p>The animation above shows the algorithm running one iteration at a time for each node of the tree.
+
+<p>For a static treemap, it’s more efficient to iterate until convergence for each node separately, rather than interleaving iterations.
+<p>This is because moving a parent Voronoi region can cause its child regions to be outside their parent, and this can happen repeatedly when interleaving.
+When this does happen, we simply reinsert such nodes at random locations within their parent.
+
+<p>This particular type of weighted Voronoi diagram is a <a href="../power-diagram/">power diagram</a>.
+
+<h2>Further Reading</h2>
+<ul>
+  <li><a href="http://graphics.uni-konstanz.de/publikationen/2005/voronoi_treemaps/Balzer%20et%20al.%20--%20Voronoi%20Treemaps.pdf">Voronoi Treemaps</a>, by Michael Balzer and Oliver Deussen.
+  <li><a href="http://dx.doi.org/10.1111/j.1467-8659.2012.03078.x">Computing Voronoi Treemaps: Faster, Simpler, and Resolution-independent</a>, by Arlind Nocaj and Ulrik Brandes.
+</ul>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script src="treemap.min.js"></script>
