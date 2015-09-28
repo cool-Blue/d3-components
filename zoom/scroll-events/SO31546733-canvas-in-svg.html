@@ -7,6 +7,7 @@
     svg {
       outline: 1px solid red;
       overflow: visible;
+      position: relative;
     }
     .axis path {
       stroke: #000;
@@ -40,7 +41,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>-->
-<script src="https://gitcdn.xyz/repo/cool-Blue/d3-lib/master/filters/shadow.js"></script>
 <script>
   var size = 500;
 
@@ -58,7 +58,7 @@
     }
   })());
 
-  var dataset = d3.range(100000).map(function(d, idx) {
+  var dataset = d3.range(10000).map(function(d, idx) {
     return {
       x: d3.random.normal(100 / 2, 100 / 4)(),
       y: d3.random.normal(100 / 2, 100 / 4)(),
@@ -138,9 +138,9 @@
 
     // Prune non visible data
     var displayedData = search(quadtree, d3Zoom.extent);
+    plotSurface.clearRect(0, 0, width, height);
+    draw(displayedData, plotSurface);
 
-    markSubset(displayedData, circle);
-    updateSelection(circle);
     //
     // Update axes
     //
@@ -149,21 +149,17 @@
     d3.select(".y.axis").call(yAxis);
 
   };
-  function markSubset(data, nodes){
-    var marked = nodes.data(data, function(d){return d.uuid;});
-    marked.enter();
-    marked.classed("visible", true);
-    marked.exit().classed("visible", false);
-  }
-  function updateSelection(elements) {
-    // some not so heavy duty stuff
-    elements
-      .attr("transform", ScaleData);
-
-  }
-
-  function ScaleData(d) {
-    return "translate(" + [xScale(d.x), yScale(d.y)] + ")";
+  function draw(data, canvas) {
+    var i = -1, n = data.length, d, cx, cy;
+    canvas.beginPath();
+    while (++i < n) {
+      d = data[i];
+      cx = xScale(d.x);
+      cy = yScale(d.y);
+      canvas.moveTo(cx, cy);
+      canvas.arc(cx, cy, 1, 0, 2 * Math.PI);
+    }
+    canvas.fill();
   }
 
   //
@@ -189,50 +185,42 @@
 
   //------------------------- DOM Manipulation -------------------------
 
-  var svg = d3.select("body").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("class", "data_container")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-    .call(d3Zoom),
+  var root = d3.select("body").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom);
+  root.node().setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  root.node().setAttribute("xmlns:xhtml", "http://www.w3.org/1999/xhtml");
 
-    plotSurface = svg.append("rect")
-    .attr("class", "overlay")
-    .attr("width", width)
-    .attr("height", height)
-    .style({"fill": "none"})
-    .style("pointer-events", "all"),
+  var svg = root.append("g")
+      .attr("class", "data_container")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      .call(d3Zoom),
+
+    plotSurface = svg.append("foreignObject")
+      .attr("width", width)
+      .attr("height", height)
+      .append("xhtml:canvas")
+      .attr("class", "overlay")
+      .attr("width", width)
+      .attr("height", height)
+      .style({"fill": "steelblue", opacity: 0.8, "pointer-events": "all", position: "fixed"})
+      .node().getContext("2d"),
 
     gX = svg.append("g")            // Add the X Axis
-    .attr("class", "x axis")
-    .attr("transform", "translate(0," + height + ")")
-    .call(xAxis),
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis),
 
     gY = svg.append("g")
-    .attr("class", "y axis")
-    .call(yAxis),
+      .attr("class", "y axis")
+      .call(yAxis),
 
     clipRect = svg.append("clipPath")
-    .attr("id", "clip")
-    .append("rect")
-    .attr("width", width)
-    .attr("height", height),
+      .attr("id", "clip")
+      .append("rect")
+      .attr("width", width)
+      .attr("height", height);
 
-    filter = filters.drop(svg),
-
-    circles = svg.append("g")
-        .style("filter", filter),
-    circle = circles.selectAll("circle")
-      .data(dataset, function(d) {
-        return d.uuid;
-      });
-
-  circle.enter()
-      .append("circle")
-      .attr("r", 3)
-      .attr("class", "datum")
-      .attr("transform", ScaleData);
 
   semanticZoom();
 </script>

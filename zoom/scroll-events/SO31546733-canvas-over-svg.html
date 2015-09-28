@@ -4,9 +4,13 @@
   <meta charset="UTF-8">
   <title></title>
   <style>
+    #viz {
+      position: relative;
+    }
     svg {
       outline: 1px solid red;
       overflow: visible;
+      position: absolute;
     }
     .axis path {
       stroke: #000;
@@ -34,29 +38,15 @@
   </style>
 </head>
 <body>
-<div id="inputDiv">
-  <input id="clipButton" type="button" value="clip">
-</div>
-
+<div id="viz"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>-->
-<script src="https://gitcdn.xyz/repo/cool-Blue/d3-lib/master/filters/shadow.js"></script>
 <script>
-  var size = 500;
+  var size = 500, r = 3;
 
   var margin = {top: 30, right: 40, bottom: 30, left: 50},
     width = 600 - margin.left - margin.right,
     height = 200 - margin.top - margin.bottom;
-
-  d3.select("#clipButton").on("click", (function() {
-    var clipped = false, clipAttr = [null, "url(#clip)"],
-      value = ["clip", "brush"];
-    return function() {
-      circles
-        .attr("clip-path", clipAttr[(clipped = !clipped, +clipped)]);
-      this.value = value[+clipped];
-    }
-  })());
 
   var dataset = d3.range(100000).map(function(d, idx) {
     return {
@@ -138,9 +128,9 @@
 
     // Prune non visible data
     var displayedData = search(quadtree, d3Zoom.extent);
+    plotSurface.clearRect(0, 0, width, height);
+    draw(displayedData, plotSurface);
 
-    markSubset(displayedData, circle);
-    updateSelection(circle);
     //
     // Update axes
     //
@@ -149,21 +139,31 @@
     d3.select(".y.axis").call(yAxis);
 
   };
-  function markSubset(data, nodes){
-    var marked = nodes.data(data, function(d){return d.uuid;});
-    marked.enter();
-    marked.classed("visible", true);
-    marked.exit().classed("visible", false);
-  }
-  function updateSelection(elements) {
-    // some not so heavy duty stuff
-    elements
-      .attr("transform", ScaleData);
-
-  }
-
-  function ScaleData(d) {
-    return "translate(" + [xScale(d.x), yScale(d.y)] + ")";
+  function draw(data, canvas) {
+    var i = -1, n = data.length, d, cx, cy, w = r*2,
+      stamp = document.createElement("canvas");
+    stamp.height = stamp.width = w*2;
+    var glyph = stamp.getContext("2d")
+    glyph.globalAlpha = 0.8;
+    glyph.beginPath();
+    glyph.shadowColor = "steelblue";
+    glyph.shadowOffsetX = glyph.shadowOffsetY = r;
+    glyph.shadowBlur = 3;
+    glyph.moveTo(w/2, w/2);
+    glyph.arc(w/2, w/2, w/2, 0, 2 * Math.PI)
+    glyph.fill()
+    canvas.globalCompositeOperation = "multiply";
+    canvas.beginPath();
+    while (++i < n) {
+      d = data[i];
+      cx = xScale(d.x) - w/2;
+      cy = yScale(d.y) - w/2;
+//      canvas.fillRect(cx, cy, w, w)
+      canvas.drawImage(stamp, cx, cy);
+//      canvas.moveTo(cx, cy);
+//      canvas.arc(cx, cy, 1, 0, 2 * Math.PI);
+    }
+    canvas.fill();
   }
 
   //
@@ -189,50 +189,33 @@
 
   //------------------------- DOM Manipulation -------------------------
 
-  var svg = d3.select("body").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("class", "data_container")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-    .call(d3Zoom),
+  var svg = d3.select("#viz").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("class", "data_container")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")"),
 
-    plotSurface = svg.append("rect")
-    .attr("class", "overlay")
-    .attr("width", width)
-    .attr("height", height)
-    .style({"fill": "none"})
-    .style("pointer-events", "all"),
+    plotSurface = d3.select("#viz").append("div")
+      .style({position: "absolute", cursor: "default",
+        top: margin.top + "px", left: margin.left + "px",
+        height: height + "px", width: width + "px"})
+      .append("xhtml:canvas")
+      .attr("class", "overlay")
+      .attr("width", width)
+      .attr("height", height)
+      .style({position: "absolute", "pointer-events": "all"})
+      .call(d3Zoom)
+      .node().getContext("2d"),
 
     gX = svg.append("g")            // Add the X Axis
-    .attr("class", "x axis")
-    .attr("transform", "translate(0," + height + ")")
-    .call(xAxis),
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis),
 
     gY = svg.append("g")
-    .attr("class", "y axis")
-    .call(yAxis),
-
-    clipRect = svg.append("clipPath")
-    .attr("id", "clip")
-    .append("rect")
-    .attr("width", width)
-    .attr("height", height),
-
-    filter = filters.drop(svg),
-
-    circles = svg.append("g")
-        .style("filter", filter),
-    circle = circles.selectAll("circle")
-      .data(dataset, function(d) {
-        return d.uuid;
-      });
-
-  circle.enter()
-      .append("circle")
-      .attr("r", 3)
-      .attr("class", "datum")
-      .attr("transform", ScaleData);
+      .attr("class", "y axis")
+      .call(yAxis);
 
   semanticZoom();
 </script>
