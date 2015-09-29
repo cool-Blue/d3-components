@@ -16,7 +16,6 @@
         .chart {
             position: relative;
             /*	top: 2em;*/
-            left: 5em;
         }
     </style>
 </head>
@@ -86,7 +85,7 @@
             .attr({'text-anchor': 'middle', dy: "0.35em"});
 
     createPieChart = function(data){
-        var radius = 200, innerRadius = radius - 75;
+        var radius = 200, innerRadius = radius - 100;
         var pieData,
             color = d3.scale.ordinal()
                 .range(['#469AB2', '#F0AD4E', '#5CB85C', '#D9534F'])
@@ -126,7 +125,7 @@
                 return d.data.name
             })
             .attr("dy", ".35em") // vertical-align
-            .style("font-size", 12);
+            .style("font-size", 14);
         labels
             .transition()
             .duration(duration)
@@ -144,6 +143,43 @@
 
     crm(createPieChart);
 //    window.setInterval(function(){crm(createPieChart)}, duration + 0)
+
+    var cBarTop = svg1.append("rect")
+        .attr({
+            "class": "bars",
+            "id": "cBarTop",
+            "x": marginX + width*0.25,
+            "width": barWidth,
+            "y": height/2 - barHeight - 2,
+            "height": barHeight
+        });
+    var fBarTop = svg2.append("rect")
+        .attr({
+            "class": "bars",
+            "id": "fBarTop",
+            "x": marginX + width * 0.25,
+            "width": barWidth,
+            "y": height / 2 - barHeight - 2,
+            "height": barHeight
+        });
+    var cBarBot = svg1.append("rect")
+        .attr({
+            "class": "bars",
+            "id": "cBarBot",
+            "x": marginX + width / 2,
+            "width": barWidth,
+            "y": height / 2 + 2,
+            "height": barHeight
+        });
+    var fBarBot = svg2.append("rect")
+        .attr({
+            "class": "bars",
+            "id": "fBarBot",
+            "x": marginX + width / 2,
+            "width": barWidth,
+            "y": height / 2 + 2,
+            "height": barHeight
+        });
 
 
 </script>
