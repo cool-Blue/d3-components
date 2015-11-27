@@ -41,9 +41,9 @@ var key = (function () {
 						f = function _key(d, i) {
 							var dk0 = d[k0];
 							return kOther
-											.reduce(function r (k, p, i) {
-												return k + "_" + d[p];
-											}, dk0)
+                                .reduce(function r (k, p, i) {
+                                    return k + "_" + d[p];
+                                }, dk0)
 						}
 					} else {
 						var k3 = k.length === 3;
@@ -59,24 +59,24 @@ var key = (function () {
 		})();
 
 function changes(d) {
-	var squares = JSON.parse(d.squaresJSON),
+	var squares = d.newValues,
 			changeSelection = d3.selection.prototype
-				.data.call(selectionPARSE(d.rectsJSON), squares, key()).exit();
+				.data.call(d.oldValues, squares, key()).exit();
 	changeSelection.each(function (d, i, j) {
 		changeSelection[j][i].__data__ = squares[i]
-	})
+	});
 	self.postMessage({
 		method: "changes",
-		data: changeSelection.slice(),
-	})
+		data: changeSelection.slice()
+	});
 
 	function selectionPARSE(selectionJSON) {
 		return selectionJSON.map(function (g) {
 			return JSON.parse(g).map(function (d) { return { __data__: d } });
 		});
-	};
+	}
 
-};
+}
 self.onmessage = function (e) {
 	self[e.data.method](e.data.data)
-}
+};

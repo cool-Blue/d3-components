@@ -127,13 +127,15 @@ $(function () {
 	function lock(lockClass) {
 		//<this> is the node
 		locked.call(this, lockClass, true)
-	};
+	}
 	function unlock(lockClass) {
 		//<this> is the node
 		locked.call(this, lockClass, false)
-	};
+	}
 
 	function permutateColours(cells, group, squares) {
+        // change the colours of random entries in the squares array
+        // use splice to replace the entry rather than update it's c value
 		var samples = Math.min(10, Math.max(~~(squares.length / 5), 1)), s, ii = [], i, k = 0;
 		while (samples--) {
 			do i = pickRandomCell(cells, group); while (ii.indexOf(i) > -1 && k++ < 5 && i > -1);
@@ -145,6 +147,8 @@ $(function () {
 		}
 	}
 	function permutatePositions(cells, group, squares) {
+        // change the position of random entries in the squares array
+        // use splice to replace the entry rather than update it's x and y values
 		var samples = Math.min(10, Math.max(~~(squares.length / 10), 1)), s, ss = [], d, m, p, k = 0;
 		while (samples--) {
 			do s = pickRandomCell(cells, group); while (ss.indexOf(s) > -1 && k++ < 5 && s > -1);
@@ -228,19 +232,10 @@ $(function () {
 
 	squares = createGrid(gridWidth, gridHeight);
 	
-	var changes, exmpleKeyDescr = { base: squares[0], include: ["indx", "x", "y"] },
-			rebindX = RebindWorker(["indx", "x"],
-                function x(changes) {
-                    updateSquaresX(changes);
-                }),
-			rebindY = RebindWorker(["indx", "y"],
-                function y(changes) {
-                    updateSquaresY(changes);
-                }),
-			rebindFill = RebindWorker(["indx", "c"],
-                function fill(changes) {
-                    updateSquaresFill(changes);
-                });
+	var changes, exampleKeyDescr = { base: squares[0], include: ["indx", "x", "y"] },
+			rebindX = RebindWorker(["indx", "x"], updateSquaresX),
+			rebindY = RebindWorker(["indx", "y"], updateSquaresY),
+			rebindFill = RebindWorker(["indx", "c"], updateSquaresFill);
 
 	$.when(rebindX.done, rebindY.done, rebindFill.done).done(function () {
 		squares_tick(squares)
@@ -254,7 +249,7 @@ $(function () {
 					rectsJSON = {data: null, serialised: true};
 
 			permutateColours(dormantRects,0, squares);
-			rectsJSON.data = rebindFill.postChanges(rects, squares).rectsJSON;
+			rectsJSON.data = rebindFill.postChanges(rects, squares).oldValues;
 
 			permutatePositions(dormantRects,0, squares);
 			rebindX.postChanges(rectsJSON, squares);
@@ -264,11 +259,11 @@ $(function () {
 				squares_tick(squares)
 			});
 
-			return true
+			return true;
 
 			updateSquaresXY(_changes = getChanges(rects, squares));
 		});
-	};
+	}
 
 	function RebindWorker(keyDescriptor, updateThen) {
 		//dependency jquery Deferred
@@ -279,7 +274,9 @@ $(function () {
 			changes = data;
 			//the message serialisation process truncates trailing null array entries
 			//re-establish these by adjusting the length of each group in the selection
-			rects.forEach(function restoreLength(d, i) { changes[i].length = d.length });
+			rects.forEach(function restoreLength(d, i) {
+                changes[i].length = d.length
+            });
 
 			//re-bind the d3 selection behaviour to the returned object
 			Object.keys(d3.selection.prototype).forEach(function (p, i, o) {
@@ -300,12 +297,12 @@ $(function () {
 			this.done = $.Deferred();
 		};
 		rebind.postChanges = function (rects, squares) {
-			var rectsJSON = rects.serialised ? rects.data : selectionJSON(rects),
-					squaresJSON = squares.serialised ? squares.data : JSON.stringify(squares),
-					data = { rectsJSON: rectsJSON, squaresJSON: squaresJSON };
+			var rectsJSON = rects.serialised ? rects.data : dummySelection(rects),
+					squaresJSON = squares.serialised ? squares.data : squares,
+					data = { oldValues: rectsJSON, newValues: squaresJSON };
 			rebind.postMessage({
 				method: "changes",
-				data: data,
+				data: data
 			});
 			return data
 		};
@@ -315,9 +312,11 @@ $(function () {
 		};
 		rebind.done = $.Deferred();
 		//standard methods
+
+        // initialise the particular key for the worker
 		rebind.postMessage({
 			method: "key",
-			data: keyDescriptor,
+			data: keyDescriptor
 		});
 		rebind.onmessage = function (e) {
 			//invoke the method on the data
@@ -330,8 +329,13 @@ $(function () {
 			return selection.map(function group(g) {
 				return JSON.stringify(g.map(function node(d) { return d.__data__ }));
 			});
-		};
-	};
+		}
+        function dummySelection(selection) {
+            return selection.map(function group(g) {
+                return g.map(function node(d) { return {__data__: d.__data__} });
+            });
+        }
+	}
 	elapsedTime.message(function (value) {
 		var this_lap = this.lap().lastLap, aveLap = this.aveLap(this_lap);
 		return 'frame rate: ' + d3.format(" >7,.1f")(1/aveLap)
