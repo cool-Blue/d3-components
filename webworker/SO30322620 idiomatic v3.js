@@ -276,7 +276,7 @@ $(function () {
 		//custom methods
 		rebind.changes = function (data) {
 			var args;
-			changes = selectionPARSE(data);
+			changes = selectionFromBuff(data);
 			//the message serialisation process truncates trailing null array entries
 			//re-establish these by adjusting the length of each group in the selection
 			rects.forEach(function restoreLength(d, i) { changes[i].length = d.length });
@@ -300,7 +300,7 @@ $(function () {
 			this.done = $.Deferred();
 		};
 		rebind.postChanges = function (rects, squares) {
-			var rectsJSON = rects.serialised ? rects.data : selectionJSON(rects),
+			var rectsJSON = rects.serialised ? rects.data : selectionToBuff(rects),
 					squaresJSON = squares.serialised ? squares.data : JSON.stringify(squares),
 					data = { rectsJSON: rectsJSON, squaresJSON: squaresJSON };
 			rebind.postMessage({
@@ -326,12 +326,12 @@ $(function () {
 
 		return rebind;
 
-		function selectionJSON(selection) {
+		function selectionToBuff(selection) {
 			return selection.map(function group(g) {
 				return JSON.stringify(g.map(function node(d) { return d.__data__ }));
 			});
 		};
-        function selectionPARSE(selectionJSON) {
+        function selectionFromBuff(selectionJSON) {
             return selectionJSON.map(function (g) {
                 return JSON.parse(g).map(function (d) {
                     return d ? { __data__: d } : undefined

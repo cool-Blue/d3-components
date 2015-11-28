@@ -61,21 +61,21 @@ var key = (function () {
 function changes(d) {
 	var squares = JSON.parse(d.squaresJSON),
 			changeSelection = d3.selection.prototype
-				.data.call(selectionPARSE(d.rectsJSON), squares, key()).exit();
+				.data.call(selectionFromBuff(d.rectsJSON), squares, key()).exit();
 	changeSelection.each(function (d, i, j) {
 		changeSelection[j][i].__data__ = squares[i]
 	})
 	self.postMessage({
 		method: "changes",
-		data: selectionJSON(changeSelection),
+		data: selectionToBuff(changeSelection),
 	})
 
-	function selectionPARSE(selectionJSON) {
+	function selectionFromBuff(selectionJSON) {
 		return selectionJSON.map(function (g) {
 			return JSON.parse(g).map(function (d) { return { __data__: d } });
 		});
 	};
-    function selectionJSON(selection) {
+    function selectionToBuff(selection) {
         return selection.map(function group(g) {
             return JSON.stringify(g.map(function node(d) {
                 return d ? d.__data__ : undefined
