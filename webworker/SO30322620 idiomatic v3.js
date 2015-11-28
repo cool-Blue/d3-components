@@ -229,18 +229,18 @@ $(function () {
 	squares = createGrid(gridWidth, gridHeight);
 	
 	var changes, exmpleKeyDescr = { base: squares[0], include: ["indx", "x", "y"] },
-			rebindX = RebindWorker(["indx", "x"],
-                function x(changes) {
-                    updateSquaresX(changes);
-                }),
-			rebindY = RebindWorker(["indx", "y"],
-                function y(changes) {
-                    updateSquaresY(changes);
-                }),
-			rebindFill = RebindWorker(["indx", "c"],
-                function fill(changes) {
-                    updateSquaresFill(changes);
-                });
+        rebindX = RebindWorker(["indx", "x"],
+            function x(changes) {
+                updateSquaresX(changes);
+            }),
+        rebindY = RebindWorker(["indx", "y"],
+            function y(changes) {
+                updateSquaresY(changes);
+            }),
+        rebindFill = RebindWorker(["indx", "c"],
+            function fill(changes) {
+                updateSquaresFill(changes);
+            });
 
 	$.when(rebindX.done, rebindY.done, rebindFill.done).done(function () {
 		squares_tick(squares)
@@ -268,11 +268,62 @@ $(function () {
 
 			updateSquaresXY(_changes = getChanges(rects, squares));
 		});
-	};
+	}
 
 	function RebindWorker(keyDescriptor, updateThen) {
-		//dependency jquery Deferred
-		var rebind = new Worker("updateSquares worker v2.js");
+        function TransfSelection() {
+            var buffer, selection, frameLength = 8;
+            function frame(d, i, j) {
+                var col = d3.rgb(d.c);
+                return [i, j, d.x, d.y, d.indx].concat([col.r, col.g, col.b]);
+            }
+            function data(offset){
+                var frame = buffer.subarray(offset, offset + frameLength);
+                return {
+                    i: frame[0],
+                    j: frame[1],
+                    d: {
+                        x: frame[2], y: frame[3],
+                        indx: frame[4],
+                        c: "rgb(" + frame.subarray(5, 8).join(",") + ")"
+                    }
+                }
+            }
+            function selectionBuffer(){
+                var k = 0;
+                buffer = new Int32Array(selection.size()*frameLength);
+                selection.each(function(d,i,j){
+                    var data = frame(d, i, j);
+                    buffer.set(data, k);
+                    k += data.length;
+                });
+            }
+            function bufferSelection(){
+                var length = buffer.length/frameLength, i, j, k, f,
+                    g = selection.length, s = new Array(g);
+                for(i = 0; i < g; i++) s[i] = new Array(length/g);
+                for(k = 0; k < length; k += length) {
+                    f = data(k);
+                    s[f.j][f.i] = f.d;
+                }
+                return s
+            }
+            return {
+                buffer: function(_){
+                    if(!_) return buffer;
+                    selection = _;
+                    selectionBuffer();
+                    return buffer;
+                },
+                selection: function(_){
+                    if(!_) return selection;
+                    buffer = _;
+                    return bufferSelection();
+                }
+            }
+        }		//dependency jquery Deferred
+        var dataFrame = TransfSelection(),
+            rebind = new Worker("updateSquares worker v2.js");
 		//custom methods
 		rebind.changes = function (data) {
 			var args;
@@ -317,7 +368,7 @@ $(function () {
 		//standard methods
 		rebind.postMessage({
 			method: "key",
-			data: keyDescriptor,
+			data: keyDescriptor
 		});
 		rebind.onmessage = function (e) {
 			//invoke the method on the data
@@ -328,17 +379,19 @@ $(function () {
 
 		function selectionToBuff(selection) {
 			return selection.map(function group(g) {
-				return JSON.stringify(g.map(function node(d) { return d.__data__ }));
+				return JSON.stringify(g.map(function node(d) {
+                    return d.__data__
+                }));
 			});
-		};
+		}
         function selectionFromBuff(selectionJSON) {
             return selectionJSON.map(function (g) {
                 return JSON.parse(g).map(function (d) {
                     return d ? { __data__: d } : undefined
                 });
             });
-        };
-	};
+        }
+	}
 	elapsedTime.message(function (value) {
 		var this_lap = this.lap().lastLap, aveLap = this.aveLap(this_lap);
 		return 'frame rate: ' + d3.format(" >7,.1f")(1/aveLap)

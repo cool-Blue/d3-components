@@ -64,26 +64,26 @@ function changes(d) {
 				.data.call(selectionFromBuff(d.rectsJSON), squares, key()).exit();
 	changeSelection.each(function (d, i, j) {
 		changeSelection[j][i].__data__ = squares[i]
-	})
+	});
 	self.postMessage({
 		method: "changes",
-		data: selectionToBuff(changeSelection),
-	})
+		data: selectionToBuff(changeSelection)
+	});
 
 	function selectionFromBuff(selectionJSON) {
 		return selectionJSON.map(function (g) {
 			return JSON.parse(g).map(function (d) { return { __data__: d } });
 		});
-	};
+	}
     function selectionToBuff(selection) {
         return selection.map(function group(g) {
             return JSON.stringify(g.map(function node(d) {
                 return d ? d.__data__ : undefined
             }));
         });
-    };
+    }
 
-};
+}
 self.onmessage = function (e) {
 	self[e.data.method](e.data.data)
-}
+};
