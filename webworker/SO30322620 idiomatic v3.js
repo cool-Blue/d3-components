@@ -276,7 +276,7 @@ $(function () {
 		//custom methods
 		rebind.changes = function (data) {
 			var args;
-			changes = data;
+			changes = selectionPARSE(data);
 			//the message serialisation process truncates trailing null array entries
 			//re-establish these by adjusting the length of each group in the selection
 			rects.forEach(function restoreLength(d, i) { changes[i].length = d.length });
@@ -331,6 +331,13 @@ $(function () {
 				return JSON.stringify(g.map(function node(d) { return d.__data__ }));
 			});
 		};
+        function selectionPARSE(selectionJSON) {
+            return selectionJSON.map(function (g) {
+                return JSON.parse(g).map(function (d) {
+                    return d ? { __data__: d } : undefined
+                });
+            });
+        };
 	};
 	elapsedTime.message(function (value) {
 		var this_lap = this.lap().lastLap, aveLap = this.aveLap(this_lap);

@@ -67,7 +67,7 @@ function changes(d) {
 	})
 	self.postMessage({
 		method: "changes",
-		data: changeSelection.slice(),
+		data: selectionJSON(changeSelection),
 	})
 
 	function selectionPARSE(selectionJSON) {
@@ -75,6 +75,13 @@ function changes(d) {
 			return JSON.parse(g).map(function (d) { return { __data__: d } });
 		});
 	};
+    function selectionJSON(selection) {
+        return selection.map(function group(g) {
+            return JSON.stringify(g.map(function node(d) {
+                return d ? d.__data__ : undefined
+            }));
+        });
+    };
 
 };
 self.onmessage = function (e) {
