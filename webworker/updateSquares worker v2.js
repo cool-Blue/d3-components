@@ -66,7 +66,7 @@ function changes(d) {
         changeSelection = d3.selection.prototype
             .data.call(dataFrame.selection(d.rects), squares, key()).exit(),
         rects;
-    console.log(d.rects.buffer.byteLength/d.rects.frame)
+    //console.log(d.rects.buffer.byteLength/d.rects.frame)
 	changeSelection.each(function (d, i, j) {
 		changeSelection[j][i].__data__ = squares[i]
 	});

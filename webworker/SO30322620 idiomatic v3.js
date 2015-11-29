@@ -301,14 +301,14 @@ $(function () {
 			this.done = $.Deferred();
 		};
 		rebind.postChanges = function (rects, squares) {
-			var rectsJSON = dataFrame.selectionBuffer(rects),
-					squaresJSON = dataFrame.dataBuffer(squares),
+			var rects = dataFrame.selectionBuffer(rects),
+					squares = dataFrame.dataBuffer(squares),
 					data = {
                         method: "changes",
-                        rects: rectsJSON,
-                        squares: squaresJSON
+                        rects: rects,
+                        squares: squares
                     };
-			rebind.postMessage(data, [rectsJSON.buffer]);
+			rebind.postMessage(data, [rects.buffer]);
 			return data
 		};
 		rebind.key = function (data) {
