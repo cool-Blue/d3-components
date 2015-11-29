@@ -27,7 +27,8 @@ importScripts('https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js');
 
 var key = (function () {
 			var keys, f, k0, kOther;
-			return function key(k) {
+			return function key(d) {
+                var k = d && d.data;
 				if (k) {
 					if (k.base) {
 						keys = Object.keys(k.base);
@@ -57,11 +58,13 @@ var key = (function () {
 				}
 			}
 		})();
+importScripts("messageObject.js");
+var dataFrame = TransfSelection()
 
 function changes(d) {
-	var squares = JSON.parse(d.squaresJSON),
+	var squares = JSON.parse(d.squares),
 			changeSelection = d3.selection.prototype
-				.data.call(selectionFromBuff(d.rectsJSON), squares, key()).exit();
+				.data.call(dataFrame.selection(d.rects), squares, key()).exit();
 	changeSelection.each(function (d, i, j) {
 		changeSelection[j][i].__data__ = squares[i]
 	});
@@ -85,5 +88,5 @@ function changes(d) {
 
 }
 self.onmessage = function (e) {
-	self[e.data.method](e.data.data)
+	self[e.data.method](e.data)
 };

@@ -254,11 +254,11 @@ $(function () {
 					rectsJSON = {data: null, serialised: true};
 
 			permutateColours(dormantRects,0, squares);
-			rectsJSON.data = rebindFill.postChanges(rects, squares).rectsJSON;
+			rebindFill.postChanges(rects, squares);
 
 			permutatePositions(dormantRects,0, squares);
-			rebindX.postChanges(rectsJSON, squares);
-			rebindY.postChanges(rectsJSON, squares);
+			rebindX.postChanges(rects, squares);
+			rebindY.postChanges(rects, squares);
 
 			$.when(rebindX.done, rebindY.done, rebindFill.done).done(function () {
 				squares_tick(squares)
@@ -271,6 +271,7 @@ $(function () {
 	}
 
 	function RebindWorker(keyDescriptor, updateThen) {
+/*
         function TransfSelection() {
             var buffer, selection, frameLength = 8;
             function frame(d, i, j) {
@@ -313,7 +314,11 @@ $(function () {
                     if(!_) return buffer;
                     selection = _;
                     selectionBuffer();
-                    return buffer;
+                    return {
+                        buffer: buffer,
+                        groups: selection.length,
+                        frame: frameLength
+                    };
                 },
                 selection: function(_){
                     if(!_) return selection;
@@ -321,7 +326,9 @@ $(function () {
                     return bufferSelection();
                 }
             }
-        }		//dependency jquery Deferred
+        }
+*/
+        //dependency jquery Deferred
         var dataFrame = TransfSelection(),
             rebind = new Worker("updateSquares worker v2.js");
 		//custom methods
@@ -351,13 +358,14 @@ $(function () {
 			this.done = $.Deferred();
 		};
 		rebind.postChanges = function (rects, squares) {
-			var rectsJSON = rects.serialised ? rects.data : selectionToBuff(rects),
+			var rectsJSON = dataFrame.buffer(rects),
 					squaresJSON = squares.serialised ? squares.data : JSON.stringify(squares),
-					data = { rectsJSON: rectsJSON, squaresJSON: squaresJSON };
-			rebind.postMessage({
-				method: "changes",
-				data: data,
-			});
+					data = {
+                        method: "changes",
+                        rects: rectsJSON,
+                        squares: squaresJSON
+                    };
+			rebind.postMessage(data, [rectsJSON.buffer]);
 			return data
 		};
 		rebind.key = function (data) {
