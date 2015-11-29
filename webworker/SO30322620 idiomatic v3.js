@@ -39,7 +39,7 @@ $(function () {
                     green = Math.floor((Math.random() * 256)).toString(),
                     blue = Math.floor((Math.random() * 256)).toString(),
                     rgb = 'rgb(' + red + ',' + green + ',' + blue + ')';
-            return rgb;
+            return [red, green, blue];
         },
 
         createGrid = function (width, height) {
@@ -84,7 +84,7 @@ $(function () {
                         .attr('height', cellSize)
                         .attr('x', function (d) { return d.x })
                         .attr('y', function (d) { return d.y })
-                        .style('fill', function (d) { return d.c });
+                        .style('fill', function (d) { return "rgb(" + d.c.join(",") + ")"});
 
             return squares;
         },
@@ -134,7 +134,7 @@ $(function () {
 	};
 
 	function permutateColours(cells, group, squares) {
-		var samples = Math.min(10, Math.max(~~(squares.length / 5), 1)), s, ii = [], i, k = 0;
+		var samples = Math.min(10, Math.max(~~(squares.length / 5), 1)), s, ii = [], i, k = 0, c;
 		while (samples--) {
 			do i = pickRandomCell(cells, group); while (ii.indexOf(i) > -1 && k++ < 5 && i > -1);
 			if (k < 10 && i > -1) {
@@ -166,7 +166,7 @@ $(function () {
 		//use a composite key function to use the exit selection as an attribute update selection
 		//since its the exit selection, d3 does not bind the new data, this is done with the .each
 		return rects
-			.data(squares, function (d, i) { return d.indx + "_" + d.x + "_" + d.y + "_" + d.c; })
+			.data(squares, function (d, i) { return d.indx + "_" + d.x + "_" + d.y + "_" + d.c.join("_"); })
 			.exit().each(function (d, i, j) { d3.select(this).datum(squares[i]) })
 	}
 	function updateSquaresXY(changes) {
@@ -221,7 +221,7 @@ $(function () {
 
 		changes.style("opacity", 0.6).transition("flash").duration(250).style("opacity", 1)
 			.transition("fill").duration(800)
-			.style('fill', function (d, i) { return d.c })
+			.style('fill', function (d, i) { return "rgb(" + d.c.join(",") + ")" })
 			.each("start", function (d) { lock.call(this, "lockedFill") })
 			.each("end", function (d) { unlock.call(this, "lockedFill") });
 	}

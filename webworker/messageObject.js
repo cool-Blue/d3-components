@@ -2,8 +2,7 @@ function TransfSelection() {
     var buffer, selection, frameLength = 8,
         groups;
     function frame(d, i, j) {
-        var col = d3.rgb(d.c);
-        return [i, j, d.x, d.y, d.indx].concat([col.r, col.g, col.b]);
+        return [i, j, d.x, d.y, d.indx].concat(d.c);
     }
     function data(offset){
         var frame = buffer.subarray(offset, offset + frameLength);
@@ -13,7 +12,7 @@ function TransfSelection() {
             d: {
                 x: frame[2], y: frame[3],
                 indx: frame[4],
-                c: "rgb(" + frame.subarray(5, 8).map(function(d){return Math.round(d)}).join(",") + ")"
+                c: [frame[5], frame[6], frame[7]]
             }
         }
     }
