@@ -49,7 +49,7 @@ var key = (function () {
 					} else {
 						var k3 = k.length === 3;
 						f = function _key(d, i) {
-							return d[k[0]] + "_" + d[k[1]] + (k3 ?  "_" + d[k[1]] : "");
+							return d? d[k[0]] + "_" + d[k[1]] + (k3 ?  "_" + d[k[1]] : "") : d;
 						}
 					}
 					self.postMessage({ method: "key", data: true });
@@ -62,29 +62,18 @@ importScripts("messageObject.js");
 var dataFrame = TransfSelection()
 
 function changes(d) {
-	var squares = JSON.parse(d.squares),
-			changeSelection = d3.selection.prototype
-				.data.call(dataFrame.selection(d.rects), squares, key()).exit();
+	var squares = dataFrame.data(d.squares),
+        changeSelection = d3.selection.prototype
+            .data.call(dataFrame.selection(d.rects), squares, key()).exit(),
+        rects;
+    console.log(d.rects.buffer.byteLength/d.rects.frame)
 	changeSelection.each(function (d, i, j) {
 		changeSelection[j][i].__data__ = squares[i]
 	});
 	self.postMessage({
 		method: "changes",
-		data: selectionToBuff(changeSelection)
-	});
-
-	function selectionFromBuff(selectionJSON) {
-		return selectionJSON.map(function (g) {
-			return JSON.parse(g).map(function (d) { return { __data__: d } });
-		});
-	}
-    function selectionToBuff(selection) {
-        return selection.map(function group(g) {
-            return JSON.stringify(g.map(function node(d) {
-                return d ? d.__data__ : undefined
-            }));
-        });
-    }
+		data: (rects = dataFrame.selectionBuffer(changeSelection))
+	}, [rects.buffer]);
 
 }
 self.onmessage = function (e) {

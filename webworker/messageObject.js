@@ -13,13 +13,13 @@ function TransfSelection() {
             d: {
                 x: frame[2], y: frame[3],
                 indx: frame[4],
-                c: "rgb(" + frame.subarray(5, 8).join(",") + ")"
+                c: "rgb(" + frame.subarray(5, 8).map(function(d){return Math.round(d)}).join(",") + ")"
             }
         }
     }
     function selectionBuffer(){
         var k = 0;
-        buffer = new Int32Array(selection.size()*frameLength);
+        buffer = new Float64Array(selection.size()*frameLength);
         selection.each(function(d,i,j){
             var data = frame(d, i, j);
             buffer.set(data, k);
@@ -30,14 +30,32 @@ function TransfSelection() {
         var l = buffer.length, frames = l/frameLength, i, j, k, f,
             g = groups, s = new Array(g);
         for(i = 0; i < g; i++) s[i] = new Array(frames/g);
-        for(k = 0; k < l; k += frames) {
+        for(k = 0; k < l; k += frameLength) {
             f = data(k);
-            s[f.j][f.i] = f.d;
+            s[f.j][f.i] = {__data__: f.d};
         }
         return s
     }
+    function dataBuffer(){
+        var k = 0;
+        buffer = new Float64Array(selection.length*frameLength);
+        selection.forEach(function(d,i){
+            var data = frame(d, i);
+            buffer.set(data, k);
+            k += data.length;
+        });
+    }
+    function bufferData(){
+        var l = buffer.length, frames = l/frameLength, i, j, k, f,
+            d = new Array(frames);
+        for(k = 0; k < l; k += frameLength) {
+            f = data(k);
+            d[f.i] = f.d;
+        }
+        return d
+    }
     return {
-        buffer: function(_){
+        selectionBuffer: function(_){
             if(!_) return buffer;
             selection = _;
             selectionBuffer();
@@ -49,10 +67,25 @@ function TransfSelection() {
         },
         selection: function(_){
             if(!_) return selection;
-            buffer = new Int32Array(_.buffer);
+            buffer = new Float64Array(_.buffer);
             groups = _.groups;
             frameLength = _.frame;
             return bufferSelection();
+        },
+        dataBuffer: function(_){
+            if(!_) return buffer;
+            selection = _;
+            dataBuffer();
+            return {
+                buffer: buffer.buffer,
+                frame: frameLength
+            };
+        },
+        data: function(_){
+            if(!_) return selection;
+            buffer = new Float64Array(_.buffer);
+            frameLength = _.frame;
+            return bufferData();
         }
     }
 }

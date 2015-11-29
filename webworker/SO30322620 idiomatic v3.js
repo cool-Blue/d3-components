@@ -271,70 +271,13 @@ $(function () {
 	}
 
 	function RebindWorker(keyDescriptor, updateThen) {
-/*
-        function TransfSelection() {
-            var buffer, selection, frameLength = 8;
-            function frame(d, i, j) {
-                var col = d3.rgb(d.c);
-                return [i, j, d.x, d.y, d.indx].concat([col.r, col.g, col.b]);
-            }
-            function data(offset){
-                var frame = buffer.subarray(offset, offset + frameLength);
-                return {
-                    i: frame[0],
-                    j: frame[1],
-                    d: {
-                        x: frame[2], y: frame[3],
-                        indx: frame[4],
-                        c: "rgb(" + frame.subarray(5, 8).join(",") + ")"
-                    }
-                }
-            }
-            function selectionBuffer(){
-                var k = 0;
-                buffer = new Int32Array(selection.size()*frameLength);
-                selection.each(function(d,i,j){
-                    var data = frame(d, i, j);
-                    buffer.set(data, k);
-                    k += data.length;
-                });
-            }
-            function bufferSelection(){
-                var length = buffer.length/frameLength, i, j, k, f,
-                    g = selection.length, s = new Array(g);
-                for(i = 0; i < g; i++) s[i] = new Array(length/g);
-                for(k = 0; k < length; k += length) {
-                    f = data(k);
-                    s[f.j][f.i] = f.d;
-                }
-                return s
-            }
-            return {
-                buffer: function(_){
-                    if(!_) return buffer;
-                    selection = _;
-                    selectionBuffer();
-                    return {
-                        buffer: buffer,
-                        groups: selection.length,
-                        frame: frameLength
-                    };
-                },
-                selection: function(_){
-                    if(!_) return selection;
-                    buffer = _;
-                    return bufferSelection();
-                }
-            }
-        }
-*/
         //dependency jquery Deferred
         var dataFrame = TransfSelection(),
             rebind = new Worker("updateSquares worker v2.js");
 		//custom methods
-		rebind.changes = function (data) {
+		rebind.changes = function (buffer) {
 			var args;
-			changes = selectionFromBuff(data);
+			changes = dataFrame.selection(buffer);
 			//the message serialisation process truncates trailing null array entries
 			//re-establish these by adjusting the length of each group in the selection
 			rects.forEach(function restoreLength(d, i) { changes[i].length = d.length });
@@ -358,8 +301,8 @@ $(function () {
 			this.done = $.Deferred();
 		};
 		rebind.postChanges = function (rects, squares) {
-			var rectsJSON = dataFrame.buffer(rects),
-					squaresJSON = squares.serialised ? squares.data : JSON.stringify(squares),
+			var rectsJSON = dataFrame.selectionBuffer(rects),
+					squaresJSON = dataFrame.dataBuffer(squares),
 					data = {
                         method: "changes",
                         rects: rectsJSON,
