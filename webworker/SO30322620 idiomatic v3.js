@@ -7,10 +7,9 @@
 //		during the worker cycle
 
 $(function () {
-	var container,
-        svg, rects,
-        gridHeight = 800,
-        gridWidth = 1600,
+	var rects,
+        gridHeight = 500,
+        gridWidth = 960,
         gridExtent, squaresExtent,
         cellSize, cellPitch,
         cellsColumns = 100,
@@ -31,7 +30,7 @@ $(function () {
         container = d3.select('.svg-container'),
         svg = container.append('svg')
             .attr('width', gridWidth)
-            .attr('height', gridHeight)
+            .attr('height', (gridHeight = gridHeight - metrics.clientHeight))
             .style({ 'background-color': 'black', opacity: 1 }),
 
         createRandomRGB = function () {
@@ -127,11 +126,11 @@ $(function () {
 	function lock(lockClass) {
 		//<this> is the node
 		locked.call(this, lockClass, true)
-	};
+	}
 	function unlock(lockClass) {
 		//<this> is the node
 		locked.call(this, lockClass, false)
-	};
+	}
 
 	function permutateColours(cells, group, squares) {
 		var samples = Math.min(10, Math.max(~~(squares.length / 5), 1)), s, ii = [], i, k = 0, c;
